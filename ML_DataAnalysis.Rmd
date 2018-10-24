@@ -1,0 +1,816 @@
+---
+title: "Assignment 2"
+author: "Stefan Rohrmanstorfer"
+date: "15\\. October 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(quantmod)
+library(tseries)
+library(car)
+library(UsingR)
+library(class)
+```
+# 1 Assignment on Confidence Intervals and Hypothesis Testing
+## 1. Get a univariate dataset from sources 1 or 2 and briefly describe it. Using these data,
+
+The datasets describes the top 79 all-time movies as of 2003 by domestic (US) gross receipts.
+The variable *gross* is numeric and describes the gross receipts in million euro. 
+
+```{r}
+data = UsingR::alltime.movies
+gross = data$Gross
+head(gross)
+```
+
+###(a) Obtain a 97% confidence interval for the population mean.
+```{r}
+t.test(gross, conf.level = 0.97)
+```
+Here the confidence interval of the population mean of all gross incomes for movies is 97% sure to be between 220.8863 and 259.4935.
+
+
+###(b) Perform a t-test on whether the population mean is equal to the sample median. Clearly state the null and alternative hypotheses, provide the p-value.
+ 
+```{r}
+median(gross)
+t.test(gross, mu=median(gross), conf.level = 0.95)
+```
+The sample median is 216 which is relatively low compared to the population mean, which is located at 240.1899.
+
+The H0 is: the popluation mean is equal to the sample median.
+
+The alternative hypothesis states that the true mean is not equal to 216 (the median).
+
+
+the degree of freedom is n-1, so in this case 78, as the number of datasets i 79.
+The level of significance is set to 0.05. The p-Value is 0.007002 - it is below the stated level of significance and therefore not significant. 
+Considering the low p-value of 0.0004584, we can reject H0 and accept H1.
+
+
+###(c) Obtain a 95% confidence interval for the population standard deviation.
+
+```{r}
+chisq.test(gross)
+```
+```{r} 
+sd=sd(gross)
+TeachingDemos::z.test(gross, st=sd, conf.level=0.95)
+df= length(gross)-1
+chiscoreUP= qchisq(0.975, df=78, lower.tail = FALSE) #95% equals 0.975 for each limit border.
+chiscoreLOW=qchisq(0.975, df=78, lower.tail = TRUE) 
+
+lowlimit = (df*(sd**2))/chiscoreLOW
+uplimit=(df*(sd**2))/chiscoreUP
+
+lowlimit = sqrt(lowlimit)
+uplimit= sqrt(uplimit)
+lowlimit
+uplimit
+```
+
+This test shows that the standard deviation of the population is 77.6170, which applies in at least 95% of the cases. The standard deviation of the sample mean is 8.7326. 
+
+The 95% confidence interval for the population standard deviation goes from the lower confidence limit of 67.11664 to the upper limit of 92.0436. The before calculated standard deviation of the population is located nearer to the lower limit. 
+
+
+###(d) Find some dataset with a categorical variable. For that variable, compute the proportion of some level. Obtain a 99% confidence interval for that proportion.
+
+A collection of variables taken for each new mother in a Child and Health Development Study. The datsaset consists of 1236 observations.The used variable *smoke* has following charactersitics:
+does mother smoke? 0=never, 1= smokes now, 2=until current pregnancy, 3=once did - not now, 9=unknown
+
+For this task, the level 1 = smokes now was chosen for investigation.
+
+```{r}
+smoke=UsingR::babies$smoke
+cat1 = (smoke =="1")
+prop.test(length(smoke[cat1]), 1236, conf.level = 0.99)
+```
+The 99% confidence interval lies between 0.3560978 and 0.4282445 - in 99% of the cases the Probabiity that a mother is smoking lies between 35.60% and 42.82%. The sample also estimates a Probabiity of 0.3915858 - Approximately 39.16% of all mothers smoke according to this study.
+
+```{r}
+tab = table(smoke)
+prop.table(tab)
+```
+
+The level 1 (= smokes now) has the second strongest proportion of all the levels. 
+
+
+###(e) Perform a hypothesis test on whether the population proportion is equal to 1/2. Clearly state the null and alternative hypotheses, provide the p-value.
+NOTE: I did not know if it was meant that the proportion is equal to 50% or if it is equal to value 1 or value 2. 
+
+Ho= The population mean of gross receipts of all movies is 280.
+H1= The population mean of gross receipts of all movies is less than 280.
+
+```{r}
+t.test(gross, mu=280, conf.level = 0.95)
+
+length(gross)
+mean = mean(gross)
+sd = sd(gross)
+
+15.40 / sqrt(25)
+
+
+x = ((mean - 280) / ((sd / sqrt(79))))
+x
+
+```
+The level of confidence to test the null hypotheses was selected as 0.05, therefore the lower confidence limit results in -1.96 and the upper confidence limit in +1.96 (2.5%)
+Also the t-value is -4.5588 and therefore not even close to the 95% confidence interval. The p-Value is way below under 0.05 (1.878e-05) and the null hypotheses therefore *rejected*. That means that there is enough evidence to say that the mean number of movie gross receipts is not equal to 400.  
+
+#### If it should be equal to 50% then:
+
+H0: The population proportion of smokers is 1/2 of the total population.
+
+H1: The population proportion of smokers is not 1/2 of the total population
+
+For this test the confidence interval has been set to 0.99. Since the dataset consists of binary values, the binom.test has been chosen.
+```{r}
+cat1=UsingR::babies$smoke
+smoking <- subset(cat1,cat1=="1")
+notsmoking <- cat1[-smoking]
+binom.test(length(smoking),length(cat1),p=1/2,conf.level=0.99)
+```
+
+The number of males is 484 out of 1236 total observations. This is not very close to being 1/2. The p-value of 2.458e-14 indicates that we can reject H0 with a 0.99 confidence level.
+
+
+###(f) Come up with some data for calculating the confidence intervals between proportions of two populations (in fact, you need just four numbers). Obtain a 99% confidence interval for the difference between proportions.
+
+```{r}
+prop.test(x=c(16,37), n=c(112,122), conf.level=0.99)
+```
+The 99% confidence interval for the difference goes from the lower limit of -0.30589788 to the upper limit of -0.01494521. 
+
+
+###(g) Perform an appropriate hypothesis test for the difference between proportions (perhaps, using imaginary data). Draw a conclusion.
+
+H0: The proportion of smokers is less than the proportion of nonsmokers.
+
+H1: The proportion of smokers is equal or bigger to the proportion of nonsmokers.
+
+```{r}
+prop.test(length(smoking),length(cat1),p=0.50,alt="greater")
+```
+
+The p-value of 1 means we can not reject H0 based on this test.
+
+
+##2. Pick the time series of log returns on three securities or commodities from data sources 1. Use getSymbols command to download the data and:
+
+The time series of log returns for the cryptocurrencies Bitcoin, Litecoin and Ethereum have been chosen for this task. 
+bitcoin goes from 2014-12-01 to 2018-09-30
+litecoin goes from 2016-08-17 to 2018-09-30
+ethereum goes from 2016-05-18 to 2018-09-29
+
+```{r warning=FALSE}
+btc = read.csv('CBBTCUSD.csv', header = TRUE)
+btc$CBBTCUSD <- as.numeric(as.character(btc$CBBTCUSD))
+btc = btc[complete.cases(btc), ]
+
+ltc = read.csv('CBLTCUSD.csv', header = TRUE)
+ltc$CBLTCUSD <- as.numeric(as.character(ltc$CBLTCUSD))
+ltc = ltc[complete.cases(ltc), ]
+
+eth = read.csv('CBETHUSD.csv', header = TRUE)
+eth$CBETHUSD <- as.numeric(as.character(eth$CBETHUSD))
+eth = eth[complete.cases(eth), ]
+
+par(mfrow=c(2,2))
+plot(btc)
+plot(ltc)
+plot(eth)
+```
+
+
+### (a) Perform the Jarque-Bera for normality. State clearly the null and alternative hypothesis.
+
+The null hypothesis is a joint hypothesis of both the skewness and the excess kurtosis being zero.
+
+The null hypthesis is (H0): The sample data is normal distributed.
+
+And the alternative hypthesis (H1): The sample data is not normal distributed.
+
+```{r}
+jarque.bera.test(btc$CBBTCUSD)
+```
+The P-Value is almost 0 and the critical value of chi squared is way too high, therefore we can reject the Null-Hypthesis.The data is not normal distributed.
+
+```{r}
+jarque.bera.test(ltc$CBLTCUSD)
+```
+The P-Value is almost 0 and the critical value of chi squared is way too high, therefore we can reject the Null-Hypthesis. The data is not normal distributed.
+
+```{r}
+jarque.bera.test(eth$CBETHUSD)
+```
+The P-Value is almost 0 and the critical value of chi squared is way too high, therefore we can reject the Null-Hypthesis. The data is not normal distributed.
+
+
+### (b) Check whether the (univariate) empirical distribution of log returns for each stock is normal by examining the QQ-plot. Use the command qq.plot() from car package instead of the built-in function. Discuss whether the observations are within the confidence interval.
+
+```{r}
+qqPlot(btc$CBBTCUSD)
+```
+The plot shows that the data lies mostly outside of the confidence interval. Another hint that the bitcoin prices over the last few years have been unpredictable. It clearly shows that the data is not normally distributed.
+
+```{r}
+qqPlot(ltc$CBLTCUSD)
+```
+The Litecoin quantile-quantile plot shows nearly the same behaviour as the one for bitcoin. Loads of outliers and except for a short phase, the data is not within the 95% confidence interval. Therefore also the Litecoin data is not normally distributed and the H0 can be rejected!
+
+```{r}
+qqPlot(eth$CBETHUSD)
+```
+Even though the Ethereum data are more located within the confidence interval than the ones from Bitcoin and Litecoin, it is still very far away from being normally distribited. Loads of outliers and except for a short phase, the data is not within the 95% confidence interval. Therefore also the Ethereum data is not normally distributed and the H0 can be rejected!
+
+
+## 3. Use a built-in set from 2 to perform the ??2 -test for homogeneity (uniform distribution). Describe the data and discuss the result.
+
+*COMMENT - NOTE:I could not find anything about homogeneity in the slides and what I know and what I have found on the internet homogeneity is tested by comparing proportions across two groups (just like in the two-way ) In addition I will 
+Example: Theory predicts that the proportion of customers buying alcohol (beer, wine, vodka) is 3:3:2. Test the plausibility of this theory when out of a sample of 80 customers, 42 buy beer, 26 wine and 12 vodka (Note:Sampling design is multinomial sampling of one variable and we test to see if the multinomial probabilities are equal to some specified values)
+
+```{r}
+#second thought - Goodness of fit
+chisq.test(c(42,26,12), p=c(3,3,2)/8)
+```
+At a 5% significance level, the data provide sufficient evidence (P-value = 0.01403) that the proportion of buying beer, wine and vodka is different from 3:3:2. Therefore it is not significant. The data is uniformly distributed.
+ 
+```{r echo=FALSE}
+#gross income of movies
+chisq.test(gross)
+#The p-value of almost 0 shows us that the data of gross income of movies is uniformly distributed.
+```
+
+
+##4. Get a two-way contingency table from sources 3. Conduct a ??2 -test for association (independence) between the variables.
+A data frame containing data on health behaviour for school-aged children. It represents male and female children who smoked or never smoked marijuana in their life.
+
+H0: The two variables are independent.
+H1: The two variables are related
+```{r echo=FALSE}
+samhda= UsingR::samhda
+head(samhda)
+
+toBeRemoved1<-which(samhda$gender=="7") 
+toBeRemoved2<-which(samhda$marijuana=="9") 
+samhda<-samhda[-toBeRemoved2,] 
+samhda<-samhda[-toBeRemoved1,] 
+```
+```{r}
+table = table(samhda$gender, samhda$marijuana)
+
+colnames(table)=c("smoked","never smoked")
+rownames(table)=c("male","female")
+chisq.test(table)
+```
+There is not sufficient evidence (P-value=0.05668) to conclude that females and males who ever smoked marijuana are associated. Which means we can not reject H0.
+
+\newpage
+
+#2 Assignment on Regression and Classification
+
+## 1. Simple regression. Get a univariate dataset from sources 2.
+
+A data set used to investigate the claim that "normal" temperature is 98.6 degrees.
+The variable *temperature* is a numeric variable and measured in Fahreinheit.
+The avriable *hr* describes the resting heart rate of the person
+
+```{r}
+temp = UsingR::normtemp
+```
+
+
+###(a) Build a simple regression model (command lm). Provide the estimates of the model's parameters. Draw the scatter plot and the regression line.
+
+```{r}
+head(temp)
+model = lm(temp$temperature ~ temp$hr)
+plot(jitter(temp$temperature,5) ~ jitter(temp$hr,5),xlab="heart rate", ylab="temperature")
+abline(model, col="red")
+```
+The scatter plot shows that the data is located at least in the region along the regression line. There is only markant outlier on the top and 2-3 maybe-outliers. The plot indicates to a positive, but weak correlation.
+
+
+###(b) Analyze the summary statistics (command summary()) focusing on:
+
+* i. The t-test for the slope. Explain.
+* ii. The F-test. Explain.
+* iii. R2 coefficient. Explain.
+
+H0: there is no relationship between the temperature and the resting heart rate.
+H1: there is an existing relationshipbetween the temperature and the resting heart rate.
+```{r}
+summary(model)
+```
+The summary says, that the average person has 96.306754 Fahreinheit temperature. The second row is the slope. That says, that for every 1 heart rate, the temperature varies by 0.026335 Fahreinheit.
+
+The P-Value is way below 0.05 and therefore shows signficance. As both P-Values are below the pre-determined statistical significance level set at 0.05 we can consider the linear regression model as significant. Therefore we can reject the H0.
+
+A larger t-value indicates that it is less likely that the coefficient is not equal to zero purely by chance. So, higher the t-value, the better.As both t-values are far away from zero and also large relative to the standard error, we can declare that a relationship between the heart rate and the normal temperature exists and reject the H0.
+
+The multiple R-squared we get is 0.06434 Or roughly 6.4% of the variance found in the response variable (temperature) can be explained by the predictor variable (hr). That means the predictor variable represents a regression that does not explain the variance in the response variable well.
+
+The F-statistic is 8.802 and considering the amount of our data (129), it is   high enough to reject the H0. 
+
+According to the summary we can say that there is an existing relationship between the temperature and the resting heart rate, but the actual model fitting is not strong enough to predict the temperature by only knowing the heart rate.
+
+
+###(c) Plot the residuals against fitted values and comment on the model's adequacy. Examine the qq-plot for the residuals.
+
+```{r}
+plot(model)
+```
+
+The residuals vs Fitted plot shows if residuals have non-linear patterns. If the trend line in the plot tends to be horizontal it indicate the absence of the nonlinear patters between response and predictors - what is expected in a linear model. The red trend line in the plot gets quite close to a horizontal line and indicates to a linear model. Another indicator for the linear relationship is that the residuals are equally spread around the horizontal line without any distinct patterns.
+
+The QQ-Plot shows that the residuals are normally distributed. Only the observation numbered 130 is identified as a clear outlier, all other observation seem to follow the straight line. 
+
+
+###(d) Make predictions for several new values of the independent variable. For each predicted value, compute and plot the confidence intervals for the mean and single value.
+
+```{r}
+new.df <- data.frame(hr=c(56, 77, 91))
+model <- lm(temperature ~ hr, data=temp)
+res = predict(model, new.df)
+```
+
+The predictions for the heart rates: 56, 77, 91 resulted in following temperatures: 97.78149, 98.33451, 98.70320. We can see that there is not much difference in the temperatute but you can see the existing relation as the lowest heart rate resulted in the lowest temperature and the highest heart rate in the highest temperature. 
+
+```{r}
+predict(model, new.df, interval = "pred", level = 0.95)
+```
+1) for heart rate 56: the lower confidence limit for the estimated single value temperature is 96.33333 and the upper limit is 99.22965
+2) for heart rate 77: the lower confidence limit for the estimated single value temperature is 96.91921 and the upper limit is 99.74982
+3) for heart rate 91: the lower confidence limit for the estimated single value temperature is 97.25699 and the upper limit is 100.14941
+
+
+```{r}
+predict(model, new.df, interval = "confidence", level = 0.95)
+```
+1) for heart rate 56: the lower confidence limit for the estimated mean temperature is 97.44596 and the upper limit is 98.11702
+2) for heart rate 77: the lower confidence limit for the estimated mean temperature is 98.19850 and the upper limit is 98.47053
+3) for heart rate 91: the lower confidence limit for the estimated mean temperature is 98.37619 and the upper limit is 99.03020
+
+
+```{r}
+model1 = lm(temperature ~ hr, data= temp)
+# 1. Add predictions 
+pred.int <- predict(model1, newdata = new.df, interval = "prediction")
+mydata <- cbind(new.df, pred.int)
+# 2. Regression line + confidence intervals
+library("ggplot2")
+p <- ggplot(mydata, aes(hr, fit)) +
+  geom_point() +
+  stat_smooth(method = lm)
+# 3. Add prediction intervals
+p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
+    geom_line(aes(y = upr), color = "red", linetype = "dashed")
+```
+
+
+##2. Multivariate regression. Get a multivariate dataset (at least 3 variables) from 3.
+
+```{r}
+fat = UsingR::fat
+dat = fat[c("body.fat", "weight","height")]
+```
+
+
+###(a) Choose the response and explanatory variables.
+
+For this task, A data set containing many physical measurements of 252 males. Most of the variables can be measured with a scale or tape measure. Can the height and weight be used to predict the percentage of body fat?
+
+The variable body.fat Percent body fat using Brozek's equation, 457/Density. 
+The variable weight is the Weight in lbs. 
+The variable height is the Height in inches. 
+
+Therefore the variable body.fat is the response variable whereas the variable weight and height are the independent or explanatory variables.
+
+
+###(b) Build a multivariate linear model (command lm). Provide the estimates of the model's parameters.
+
+```{r}
+lm = lm(dat$body.fat ~ dat$weight + dat$height)
+```
+
+
+###(c) Analyze the summary statistics (command summary()) with the emphasis on:
+
+```{r}
+summary(lm)
+```
+The P-Value is way below 0.05 and therefore shows signficance. As all P-Values are below the pre-determined statistical significance level set at 0.05 we can consider the linear regression model as significant. That indicates that we can reject the H0.
+
+The standard error is 5.711 on 249 degrees of freedom. 
+
+*i. t-test for slopes. Explain.*
+The t-value for Weight is t = 14.480, with a p-value of less than 2e-16.
+The t-value for Height is t = -6.287, with a p-value of less than 1.44e-09.
+Therefore the test statistic for each variable falls in the rejection region (p-values < .05), meaning that there is enough evidence that both variables affect the body.fat at a = 0.05 -> We can reject the H0.
+
+
+*ii. Overall F-test. Explain.*
+
+The F-statistic is 106.7 and considering the amount of our data (249), it is in the rejection region -> therefore we can reject the H0. That means that we have enough evidence that at least one independent variable affects the response variable (body.fat).  
+
+
+*iii. R2 and adjusted R2 coefficients. Explain.*
+
+The multiple R-squared we get is 0.4614 Or roughly 46% of the variance found in the response variable (body.fat) can be explained by the predictor variables (weight and height). That means the predictor variable represents a regression that explains the variance in the response variable in 46% of the occassions. The adjusted R-squared says that: 0.4571 or 45.7% of the variation in body.fat is explained by the variation in weight and height, taking into account the sample size and number of independent variables.
+
+
+###(d) Plot the residuals against fitted values and comment on the model's adequacy.
+
+```{r}
+plot(lm) #first plot
+```
+The red trend line in the plot is not even close to a horizontal line and indicates to a nonlinear model. However, if we would not consider the major outliers 39 and 42 (and maybe also 216) it would come closer to a linear model. 
+
+
+###(e) Play with your model by adding or removing the explanatory variables. Alternatively, add a non-linear term(s) to your model:
+
+*i. Choose the best one by the partial F-test criterion (command anova)
+
+```{r}
+anova(lm)
+anova(lm(formula=dat$body.fat ~ dat$height))
+anova(lm(formula=dat$body.fat ~ dat$weight))
+```
+The F value for the weight is 173.823 and p-value is very low too. In other words, the variation of body.fat means among different weights (numerator) is much larger than the variation of body-fat within each weights, and our p-value is less than 0.05 (as suggested by normal scientific standard). Nearly the same result for the height variable. Hence we can conclude that for our confidence interval we accept the alternative hypothesis H1 that there is a significant relationship between both height and weight and the body-fat.
+
+*ii. Choose the best one by the AIC criterion (command stepAIC)
+```{r}
+library(MASS)
+AIC(lm)
+AIC(lm(dat$body.fat ~ dat$height))
+AIC(lm(dat$body.fat ~ dat$weight))
+stepAIC(lm)
+MASS::stepAIC(lm(dat$body.fat ~ dat$height + dat$weight))
+```
+The model with both explanatory variables has the lowest AIC and should therefore be chosen. 
+
+*iii. For each model, watch the value of the adjusted R2
+
+```{r}
+summary(lm)$adj.r.squared #0.4571141
+summary(lm(formula=dat$body.fat ~ dat$height))$adj.r.squared #0.003971713 
+summary(lm(formula=dat$body.fat ~ dat$weight))$adj.r.squared #0.3734643
+```
+Again the model with both variables has the biggest adjusted R-squared value with 0.4571, followed close by the weight with 0.3734643. Only the height alone seems not to be significant with 0.003971713 -> only ~0.4% of the body-fat variation is explained by the height variation.
+
+
+##3. Logistic regression. Get a binary response regression dataset from 2 or 3. Briefly describe the data.
+The dataset (training) is a collection of data about some of the passengers (889 to be precise), and the goal is to predict the survival (either 1 if the passenger survived or 0 if they did not) based on some features such as the age and the fare they paid. 177 Data about the age are missing - these rows have been deleted.
+
+```{r}
+datatitanic= read.csv("train.csv")
+
+titanic = datatitanic[c("Age","Fare", "Sex", "Survived")]
+titanicIndependent = titanic[c("Age", "Sex", "Fare")]
+titanic = titanic[complete.cases(titanic), ]
+titanicIndependent = titanicIndependent[complete.cases(titanicIndependent), ]
+
+```
+
+
+###(a) Build a logistic regression model (command glm). Comment on the significance of the coefficients.
+```{r}
+glm.regr = glm(Survived ~ Age + Fare + Sex, data= titanic, family = binomial)
+summary(glm.regr)
+```
+The intercept, Fare and Sex variables P-Values are all below the level of significance (0.05) and therefore significant. Only the age is not significant. The coefficient for the age is a negative number, meaning that older people had a smaller chance to survive. While passenger who paid more fare had a better chance to survive. Also Males had a much worse chance to survive than women. In conclusion, the coefficients are pretty low, what means that they have little impact on the response variable, except for the Sex - which has a huge impact.
+
+
+###(b) Use stepAIC command to select the best model.
+```{r}
+MASS::stepAIC(glm.regr, family=binomial)
+
+```
+According to the results of the StepAIC, the age model outperforms the other two models.
+
+
+###(c) Make a prediction based on the entire dataset. State the threshold of acceptance. Compare the forecast with the actual observations. Comment on the results.
+
+The treshold of acceptance is set to 0.5.
+```{r}
+glm.probs <- predict(glm.regr,type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, "1", "0")
+attach(titanic)
+table(glm.pred,Survived)
+mean(glm.pred == Survived)
+
+```
+555 out of our 714 are predicted correct, which leads to a accuracy of 77,73%. Not a good result but also not bad.
+
+### (d) Divide the entire set into training and test subsets. Rebuild the model using only the training subset. Make predictions for the test subset. Comment.
+
+```{r}
+train =  titanic[1:500,]
+test = titanic[501:714,]
+```
+
+```{r}
+glmp.fit <- glm(glm.regr, data = train, family = binomial)
+
+glm.probs <- predict(glmp.fit, newdata = test, type = "response")
+
+glm.pred <- ifelse(glm.probs > 0.5, "1", "0")
+
+glm.Survived = test$Survived
+table(glm.pred, glm.Survived)
+```
+```{r}
+mean(glm.pred == glm.Survived)
+```
+The result now is pretty much the sam with an accuracy of 78.50%. What means that our model is not overfitted, as it is actually even performing better on new data. It predicted 168 out of 214 correct. However it is still far away from an accurate prediction model.
+
+As my dataset also contains a test dataset, I will also apply this test dataset to my model and predict how many people survived.
+```{r}
+testdata = read.csv("test.csv", header = TRUE)
+titanictest = testdata[c("Age","Fare", "Sex")]
+titanictest = titanictest[complete.cases(titanictest), ]
+glmt.prob <- predict(glmp.fit, 
+                    newdata = titanictest, 
+                    type = "response")
+
+glmt.pred <- ifelse(glmt.prob > 0.5, "1", "0")
+```
+
+```{r}
+Survivedt.test = as.numeric(glmt.pred)
+table(Survivedt.test)
+```
+Out of the 331 people in the test dataset, 198 are predicted to die during the titanic based on their age, sex and paid Fare. And 133 people survive. These are predicted Survivals for the future under the same circumstances just for the interest of the research. There is no 'correct' data of the Survival to prove the predictions. 
+
+##4. Discriminant analysis. Use the same dataset as for the logistic regression.
+
+###(a) Conduct the linear discriminant analysis (command lda, package MASS) using training and test subsets. Compare the forecast with the actual observations. Comment on the results.
+
+```{r}
+library(MASS)
+
+lda.fit <- lda(Survived~ Age+Fare+Sex,data=train)
+lda.prob <- predict(lda.fit, newdata=test, type="response")
+
+ct <- table(lda.prob$class, test$Survived)
+mean(lda.prob$class == test$Survived)
+```
+The predicted forecasts on the test dataset are accurate to 78.50% to the actual observations. By now, if only slightly, the best model we have had so far.
+
+```{r}
+diag(prop.table(ct, 1))
+sum(diag(prop.table(ct)))
+```
+Approximately 80.6% of the predictions for *not survived* are correct, while only ~74.7% of the predictions for *survived* are correct.
+
+```{r}
+neval=nrow(titanic)-(nrow(train))
+
+m1=lda(Survived~ Age+Fare+Sex,data=train)
+mpred <- predict(m1,data=test)$class
+
+tablin=table(test$Survived,predict(m1,test)$class)
+errlin=((neval)-sum(diag(tablin)))/neval
+
+merrlin=mean(errlin)
+merrlin
+```
+We achieve a 21.49% misclassification rate in our model.
+
+
+###(b) Conduct the quadratic discriminant analysis (command qda). Comment.
+
+```{r}
+qda.fit <- qda(Survived~ Age+Fare+Sex,data=train)
+qda.fit
+```
+The prior probability of a passenger *not surviving* is 58.6% and therefore 42.4% to survive. The quadratic discriminant analysis also gives an overview about the group means. The most interesting means here are that the mean of Males who did not survive is 84.6%, far above the mean of Males who survived (30.1%). The mean of the age lies near together with 31years at not survived and 28.5years at survived. However also the mean of the Fare of the passengers who survied was twice as much as of the ones who did not survive.
+
+```{r}
+qda.pred <- predict(qda.fit, newdata=test, type="response")
+table(qda.pred$class, test$Survived)
+mean(qda.pred$class == test$Survived)
+```
+The models prediction accuracy is 79.44%.
+
+
+##5. The KNN classifier. Use the same dataset as for the logistic regression and discriminantanalysis.
+
+
+###(a) Conduct the KNN classification (command knn(), package class) using training and test subsets. Compare the forecast with the actual observations. Comment on the results.
+
+```{r}
+library(class)
+
+
+head(titanic)
+titanic.subset = titanic[c("Age","Fare","Sex")]
+titanic.subset = titanic.subset[complete.cases(titanic.subset), ]
+```
+
+```{r}
+#idxs <- sample(1:nrow(titanic.subset),as.integer(0.7*nrow(titanic.subset)))
+idxs <- 1:500
+trainTitanic <- titanic.subset[idxs,]
+testTitanic <-  titanic.subset[-idxs,]
+
+trainTitanic$Sex <- as.numeric(trainTitanic$Sex) 
+testTitanic$Sex <- as.numeric(testTitanic$Sex)
+train.def <- titanic$Survived[idxs]
+test.def <- titanic$Survived[-idxs]
+
+nn3 <- knn(trainTitanic,testTitanic,train.def,k=3)
+100 * sum(test.def == nn3)/100
+```
+When considering 3 nearest neighbors (k=3), 145 out of the 214 forecasts were correct. That gives an accuracy of 67.7%, which classifies as the model with the lowest accuracy by now.
+
+
+###(b) Play with the number of nearest neighbors K.
+
+```{r}
+nn2 <- knn(trainTitanic,testTitanic,train.def,k=2)
+nn5 <- knn(trainTitanic,testTitanic,train.def,k=5)
+nn8 <- knn(trainTitanic,testTitanic,train.def,k=8)
+nn12 <- knn(trainTitanic,testTitanic,train.def,k=12)
+nn10 <- knn(trainTitanic,testTitanic,train.def,k=10)
+nn20 <- knn(trainTitanic,testTitanic,train.def,k=20)
+nn15 <- knn(trainTitanic,testTitanic,train.def,k=15)
+100 * sum(test.def == nn12)/100
+
+
+```
+When choosing different coefficients for the k-nearest neighbor parameter, I have discovered following results (in 4 Iterations):
+nn2= 132, 135, 136, 135
+nn5= 155, 154, 154, 155
+nn8= 155, 151, 155, 158
+nn10= 162, 159, 156, 159
+nn12= 161, 157, 159, 158
+nn15= 158, 158, 158, 158
+nn20= 158, 154, 153, 155
+
+With 162/214, the model with k=10 has achieved the best result.
+
+
+##6. Compare the quality of classification obtained by algorithms 3-5 for the test subset.
+
+glm: 0.7850467 -> 78.50%
+lda: 0.7850467 -> 78.50%
+qda: 0.7943925 -> 79.44%
+knn: 0.6728971 -> 67.29%
+
+Although, all classification algorithms, except for the KNN, scored enarly the same accuracy (quality of classification), the QDA was the most accurate one.
+
+
+\newpage
+
+#3 Assignment on Principal Component Analysis
+
+##1. Get the multivariate data. You have several options:
+
+```{r}
+gvh = ISwR::graft.vs.host
+```
+
+
+##2. Use FactoMineR package to study individuals:
+###(a) Plot the individuals in the plane corresponding to the first two principal components (PCs), see [4], p.31. Comment on the resulting cloud.
+
+As the first column just represents the identifier for each entry in the dataset, we will just consider columns 2 to 8.
+```{r}
+#gvh.pca <- prcomp(gvh[,c(2:8)], center = TRUE,scale. = TRUE)
+res.pca <- FactoMineR::PCA(gvh,scale.unit=TRUE)
+summary(res.pca)
+```
+The summary of our PCA object shows us the Standard devaiation, proportion of variance and cumulative proportion for all variables.That is to say that PC1 explains 39% of the total variance, which means that more than one-thirds of the information in the dataset (8 variables) can be encapsulated by just that one Principal Component.
+ 
+```{r}
+res.pca <- FactoMineR::PCA(gvh[1:50,],scale.unit=TRUE)
+res.pca
+```
+The supplementary categorical variables are also represented on the graph of individuals through their categories. We can see that *alive* is closer to the main axis of variability than *dead*.
+
+
+###(b) Justify the choice of the PCs by plotting the eigenvalues, [4],p.32. Calculate how much of the total variability is explained by the first two PCs.
+
+```{r}
+barplot(res.pca$eig[,1],main='Eigenvalues',names.arg=paste('dim',1:nrow(res.pca$eig)))
+```
+
+This barplot shows us the percentage of variance for each component / dimension. We can see that the first one has a much higher percentage than the others, while dimensions 2 to 9 decreases with quite the same steps.
+
+Calculating how much of the total variability is explained by the first two PCs:
+```{r}
+colSums(res.pca$eig[1:2,])
+```
+
+61.59% of the total variability is explained by the first two PCs. With 39% coming from PC1 as we already examined before.
+
+
+###(c) Discuss the quality of the PCA representation: provide cos2 and the contributions for each individual.
+
+```{r}
+head(round(cbind(res.pca$ind$coord[,1:4],res.pca$ind$cos2[,1:4],res.pca$ind$contrib[,1:4]),2),40)
+```
+The first dimension has the highest values (explains the most variability), closely followed by the second one. It looks like the first dimension is not enough to explain enough amount of individuals. To explain a sufficient amount of individuals, we should probably take more dimensions into account.
+
+
+The table below shows that we need 6 components to explain 95% of the observations. Meaning that we need 6 out of our 9 components to explain a sufficient amount of observations.
+
+```{r}
+round(res.pca$eig,2)
+```
+
+
+###(d) If there are categorical variables, paint the individuals with different colors according to the categories. Draw the confidence ellipses and interpret them.
+
+There are no categorial variables anymore since they have been removed at the beginning of this chapter. I have re-added the teamID just for this exercise 
+
+```{r}
+library(FactoMineR)
+gvh = ISwR::graft.vs.host
+gvh$dead <- ifelse(gvh$dead == 1, "dead", "alive")
+
+res.pca2=FactoMineR::PCA(gvh,scale.unit=TRUE,quali.sup = 9)
+concat.data <- cbind.data.frame(gvh$dead,res.pca2$ind$coord)
+ellipse.coord <- coord.ellipse(concat.data,bary = TRUE)
+plot.PCA(res.pca2,habillage=9,ellipse=ellipse.coord,cex=0.8)
+```
+Due to the two levels of the categorical variable 'dead', 2 ellipses have been drawn in the plot. The ellipses do not overlap, that is a good sign and indicates that the categories:dead or alive make sense in terms of the quantitative variables.
+
+
+##3.3 Study cloud of variables
+
+###(a) Using the graphical output of pca command, discuss correlation between the variables including presence of groups of variables that are closely related.
+
+```{r}
+gvh = ISwR::graft.vs.host
+FactoMineR::PCA(gvh,scale.unit=TRUE)
+```
+
+Most of the variables are presented quite well as the 4 out of 9 arrows are extremely close to the border of the circle. Just one variable (donage) is bit more far aways of the border. A small cluster of arrows can be observed at the right side of the circle above to the horizontal line. These variables are positively correlated. No negative correlation can be observed from this map.
+
+
+###(b) Discuss the quality of the PCA representation: provide cos2 and the contributions for variables.
+
+```{r}
+round(res.pca$var$cos2,4)
+```
+
+The table above represents the quality of the variables according to the dimensions 1-5. Here can see that the first dimension explains most values the best. However, for example the second dimension of the type has much better quality than the first dimension.
+
+
+###(c) Use dimdesc function to summarize the variables. Comment on the p-values.
+
+Each p-value is extremely close to zero.
+
+The first component has good correlation with the major part of the variables. With all correlations above 0.50 except for the string negative correlation with the variable time.
+
+The second component has a strong negative correlation with dead and a strong positive correleation with the type.
+
+Finally, the third component has a strong positive correlation with donage and a strong negative with the index. 
+
+No category of any categorical variable characterises components 1, 2 and 3 with a confidence level of 95%.
+
+```{r}
+dimdesc(res.pca)
+```
+
+
+###3.3(d) Plot the correlations between variables using pairs function. Compare the result with that of 3a.
+
+In the pairs-plot below we can see that only a few variables are correlating with each other. 
+It seems like the only strong positive correlation is between rcpage and donage. Weak Correlations can be found between:
+* time and donage; 
+* time and rcpage;
+
+```{r}
+pairs(gvh,main='Correlation between the variables')
+```
+
+
+#APPENDIX
+```{r}
+# population sd
+psd = sd(gross)*(sqrt((length(gross)-1)/length(gross)))
+psd
+#under&upper limit
+le = mean(gross) - psd
+he = mean(gross) + psd
+#build dataset
+psdset = subset(gross, gross < he & gross > le )
+t.test(psdset)
+
+rchisq(79, df=78)
+```
+```{r}
+#self calculation of the pop mean
+n=length(gross)
+s= sd(gross)
+ME = 2.17 * (s/(sqrt(n))) 
+xm= mean(gross)
+xm+c(-ME, ME)
+```
